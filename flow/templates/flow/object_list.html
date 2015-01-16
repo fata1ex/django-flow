@@ -1,0 +1,13 @@
+<div class="flow__container">
+
+    <div class="flow__object_list">
+        {% for object in flow.objects %}
+            {% include object.flow_template_name with object=object %}
+        {% empty %}
+            {% if flow %}
+                {% include flow.template_empty_block %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+</div>
