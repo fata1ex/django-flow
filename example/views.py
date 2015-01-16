@@ -2,33 +2,39 @@
 
 import json
 
-from flow import BaseElement, Flow
+from flow import FlowElement, Flow
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
 
 from example.models import Post, Like
 
 
-class PostElement(BaseElement):
+class PostElement(FlowElement):
     element_class = Post
     template_name = 'example/flow_post_item.html'
 
-    def objects(self):
+    sorting_key = 'created_at'
+
+    def get_objects(self):
         return Post.objects.all()
 
 
-class LikeElement(BaseElement):
+class LikeElement(FlowElement):
     element_class = Like
     template_name = 'example/flow_like_item.html'
 
-    def objects(self):
-        return Like.objects.all()
+    sorting_key = 'created_at'
+
+    def get_objects(self):
+        return Like.objects.select_related('user').all()
 
 
 def index(request):
-    flow = Flow()
+    flow = Flow(reverse=True)
+
     return render_to_response('example/index.html', {'flow': flow})
 
 

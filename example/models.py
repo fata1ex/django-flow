@@ -36,4 +36,4 @@ class Like(models.Model):
         ordering = ('-created_at',)
 
     def __unicode__(self):
-        return '{0} <3 {1}'.format(self.user, self.content_object)
+        return '{0} <3 {1}'.format(self.user, self.object_id)

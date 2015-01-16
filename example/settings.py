@@ -18,7 +18,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'debug_toolbar',
     'flow',
     'example'
 )
@@ -54,5 +53,8 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 )
 
-STATSY_CACHE_TIMEOUT = 60
-STATSY_CELERY = False
+
+try:
+    from local_settings import *
+except ImportError:
+    pass

@@ -23,7 +23,6 @@ class FlowConfiguration(models.Model):
     name = models.CharField(max_length=20, verbose_name='name')
     configuration = models.TextField(verbose_name='configuration')
 
-    default_configuration = '''{"element_list": {}}'''
     cache_key = 'flow_configuration'
 
     objects = FlowQuerySet.as_manager()
@@ -47,21 +46,21 @@ class FlowConfiguration(models.Model):
 
     @classmethod
     def get_configuration(cls):
-        configuration_object = cache.get(cls.cache_key)
-        if configuration_object is None:
+        configuration = cache.get(cls.cache_key)
+        if configuration is None:
             try:
                 configuration_object = cls.objects.get(is_active=True)
-                cache.set(cls.cache_key, configuration_object)
+                configuration = configuration_object.configuration
 
             except ObjectDoesNotExist:
-                configuration_object = cls.default_configuration
-                cache.set(cls.cache_key, configuration_object)
+                configuration = '{}'
 
             except MultipleObjectsReturned:
                 logger.exception('Too many flow configurations!')
                 raise Http404
 
-        return json.loads(configuration_object.configuration)
+        cache.set(cls.cache_key, configuration)
+        return json.loads(configuration)
 
 
 from .signals import init_signals

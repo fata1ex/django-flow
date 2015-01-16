@@ -17,9 +17,9 @@ class LikeAdmin(admin.ModelAdmin):
 
     list_select_related = ['user']
 
-    def get_queryset(self, request):
-        return super(LikeAdmin, self).get_queryset(request).prefetch_related('posts')
-
+    # def get_queryset(self, request):
+    #     return super(LikeAdmin, self).get_queryset(request).prefetch_related('posts')
+    pass
 
 admin.site.register(Post, PostAdmin)
 admin.site.register(Like, LikeAdmin)
