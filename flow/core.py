@@ -5,6 +5,14 @@ from random import choice
 from flow.models import FlowConfiguration
 
 
+class FlowException(Exception):
+    pass
+
+
+class FlowConfigurationException(FlowException):
+    pass
+
+
 class FlowElement(object):
     flow = None
     element_class = None
@@ -12,10 +20,11 @@ class FlowElement(object):
 
     sorting_key = ''
 
-    def __init__(self, flow, count=None):
+    def __init__(self, flow, page_limit=None):
         super(FlowElement, self).__init__()
         self.flow = flow
-        self.count = int(count) if count else None
+        self.page_limit = int(page_limit) if page_limit else None
+
         self.object_list = []
 
     def objects(self):
@@ -44,16 +53,27 @@ class Flow(object):
     template_name = 'flow/object_list.html'
     template_empty_block = 'flow/empty_block.html'
 
-    def __init__(self, reverse=False, randomize_same_weight=False):
+    def __init__(self, page=None):
         super(Flow, self).__init__()
 
         self.element_list = []
         self.object_list = []
 
-        self.reverse = reverse
-        self.randomize_same_weight = randomize_same_weight
+        try:
+            self.page = int(page)
+            if self.page < 0:
+                raise ValueError
+
+        except (ValueError, TypeError):
+            self.page = None
+
+        self.paginate_by = self.configuration.get('paginate_by')
+        self.reverse = self.configuration.get('reverse', False)
+        self.randomize_same_weight = self.configuration.get('randomize_same_weight', False)
 
         self.init_flow_elements()
+
+        # self.cache_key = '{0}'.format('flow')
 
     def add_element(self, element):
         self.element_list.append(element)
@@ -64,8 +84,8 @@ class Flow(object):
 
     @property
     def configuration(self):
-        if not self._configuration:
-            self._configuration = FlowConfiguration.get_configuration()
+        # if not self._configuration:
+        self._configuration = FlowConfiguration.get_configuration()
 
         return self._configuration
 
@@ -75,15 +95,28 @@ class Flow(object):
             for element in self.__class__.element_class_list()
         }
 
-        for element_name in self.configuration.get('elements', []):
-            element = element_class_map.get(element_name)
+        for element in self.configuration.get('elements', []):
+            if isinstance(element, (str, unicode)):
+                name, page_limit = element, None
+
+            elif isinstance(element, dict):
+                name, page_limit = element.items()[0]
+
+            else:
+                raise FlowConfigurationException
+
+            element = element_class_map.get(name)
             if element:
-                self.add_element(element(self))
+                self.add_element(element(self, page_limit=page_limit))
+
+    def objects(self):
+        self.object_list = self._get_object_list()
+        return self._get_paginated_object_list()
 
     def _get_object_list(self):
         for element in self.element_list:
             for obj in element.objects():
-                obj.flow_template_name = element.template_name
+                obj.flow_element = element
                 obj.flow_weight = element.weight(obj)
 
                 self.object_list.append(obj)
@@ -109,5 +142,11 @@ class Flow(object):
 
         return 0
 
-    def objects(self):
-        return self._get_object_list()
+    def _get_paginated_object_list(self):
+        if self.page and self.paginate_by:
+            index_start = (self.page - 1) * self.paginate_by
+            index_end = self.page * self.paginate_by
+
+            return self.object_list[index_start:index_end]
+
+        return self.object_list

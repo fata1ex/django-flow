@@ -5,7 +5,6 @@ import json
 from flow import FlowElement, Flow
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
 
@@ -33,7 +32,7 @@ class LikeElement(FlowElement):
 
 
 def index(request):
-    flow = Flow(reverse=True)
+    flow = Flow(page=request.GET.get('page'))
 
     return render_to_response('example/index.html', {'flow': flow})
 

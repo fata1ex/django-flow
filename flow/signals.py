@@ -12,15 +12,13 @@ def init_signals():
 
 @receiver(pre_save, sender=FlowConfiguration)
 def track_active_configuration(sender, **kwargs):
-    """ Only one active configuration is allowed. You can not deactivate configuration manually.
-    """
-
     configuration = kwargs['instance']
     if configuration.is_active:
         for conf in FlowConfiguration.objects.active().exclude(id=configuration.id):
             conf.deactivate(commit=False)
 
-    else:
+    elif not FlowConfiguration.objects.active().exists():
+        # You are not allowed to deactivate last configuration
         configuration.activate(commit=False)
 
     return

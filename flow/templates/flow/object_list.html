@@ -2,7 +2,7 @@
 
     <div class="flow__object_list">
         {% for object in flow.objects %}
-            {{ object.flow_weight }} {% include object.flow_template_name with object=object %}
+            {{ object.flow_weight }} {% include object.flow_element.template_name with object=object %}
             <hr/>
         {% empty %}
             {% if flow %}
